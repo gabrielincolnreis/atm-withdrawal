@@ -1,33 +1,268 @@
-<div class="container">
-  <header>
-    <img src="./logo.svg" alt="Marko" class="logo">
-  </header>
-  <main>
-    <p>
-      Edit
-      <code>./src/routes/+page.marko</code>
-       and save to reload.
-    </p>
-    <a href="https://markojs.com/docs/introduction/getting-started">
-      Learn Marko
-    </a>
-  </main>
+<let/amount=""/>
+<let/notes=([] as number[])/>
+<let/error=""/>
+<let/loading=false/>
+
+<div class="atm-container">
+  <div class="atm-card">
+    <header class="atm-header">
+      <h1>ATM Withdrawal</h1>
+      <p class="subtitle">Enter the amount you wish to withdraw</p>
+    </header>
+
+    <form class="atm-form" on-submit(event) {
+      event.preventDefault();
+      loading = true;
+      error = "";
+      notes = [];
+
+      const formData = new FormData(event.target as HTMLFormElement);
+      const amountValue = parseFloat(formData.get("amount") as string);
+
+      fetch("/api/withdraw", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ amount: amountValue }),
+      })
+        .then(response => response.json().then(data => ({ response, data })))
+        .then(({ response, data }) => {
+          if (!response.ok) {
+            error = data.message || "An error occurred";
+          } else {
+            notes = data.notes || [];
+            error = "";
+          }
+        })
+        .catch(err => {
+          error = "Failed to connect to the server. Please try again.";
+          console.error("Error:", err);
+        })
+        .finally(() => {
+          loading = false;
+        });
+    }>
+      <div class="input-group">
+        <label for="amount">Amount ($)</label>
+        <input
+          id="amount"
+          name="amount"
+          type="number"
+          step="0.01"
+          placeholder="0.00"
+          value=amount
+          disabled=loading
+        />
+      </div>
+
+      <button type="submit" class="submit-btn" disabled=loading>
+        ${loading ? "Processing..." : "Withdraw"}
+      </button>
+    </form>
+
+    <if=(notes && notes.length > 0)>
+      <div class="results">
+        <h2>Notes to be delivered:</h2>
+        <div class="notes-display">
+          <for|note| of=notes>
+            <div class="note-item">
+              <span class="note-value">$${(note as number).toFixed(2)}</span>
+            </div>
+          </for>
+        </div>
+        <div class="total">
+          <strong>Total: $${notes.reduce((sum: number, note: number) => sum + note, 0).toFixed(2)}</strong>
+        </div>
+      </div>
+    </if>
+
+    <if=error>
+      <div class="error-message">
+        <strong>Error:</strong> ${error}
+      </div>
+    </if>
+  </div>
 </div>
-<mouse-mask/>
+
 
 <style>
-  .container {
+  .atm-container {
     display: flex;
-    flex-direction: column;
     justify-content: center;
     align-items: center;
-    font-size: clamp(1em, 2vw, 2em);
-    padding: 1em;
+    min-height: 100vh;
+    padding: 2rem;
     box-sizing: border-box;
-    height: 100%;
-    width: 100%;
   }
-  img.logo {
-    width: 12em;
+
+  .atm-card {
+    background: linear-gradient(135deg, #1e1e2e 0%, #2a2a3e 100%);
+    border-radius: 1rem;
+    padding: 2.5rem;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    max-width: 500px;
+    width: 100%;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .atm-header {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+
+  .atm-header h1 {
+    margin: 0 0 0.5rem 0;
+    font-size: 2rem;
+    font-weight: 600;
+    background: linear-gradient(135deg, #fff 0%, #a0a0a0 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .subtitle {
+    margin: 0;
+    color: #a0a0a0;
+    font-size: 0.9rem;
+  }
+
+  .atm-form {
+    margin-bottom: 2rem;
+  }
+
+  .input-group {
+    margin-bottom: 1.5rem;
+  }
+
+  .input-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #e0e0e0;
+    font-weight: 500;
+    font-size: 0.9rem;
+  }
+
+  .input-group input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-size: 1.1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.5rem;
+    color: #fff;
+    box-sizing: border-box;
+    transition: all 0.2s;
+  }
+
+  .input-group input:focus {
+    outline: none;
+    border-color: #09c;
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 0 3px rgba(0, 153, 204, 0.1);
+  }
+
+  .input-group input:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .submit-btn {
+    width: 100%;
+    padding: 0.875rem;
+    font-size: 1rem;
+    font-weight: 600;
+    background: linear-gradient(135deg, #09c 0%, #0077a3 100%);
+    color: #fff;
+    border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .submit-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 153, 204, 0.4);
+  }
+
+  .submit-btn:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  .submit-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .results {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .results h2 {
+    margin: 0 0 1rem 0;
+    font-size: 1.2rem;
+    color: #e0e0e0;
+    font-weight: 500;
+  }
+
+  .notes-display {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .note-item {
+    background: rgba(0, 153, 204, 0.2);
+    border: 1px solid rgba(0, 153, 204, 0.3);
+    border-radius: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #09c;
+  }
+
+  .note-value {
+    display: block;
+  }
+
+  .total {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+    font-size: 1.1rem;
+    text-align: center;
+  }
+
+  .error-message {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: rgba(220, 53, 69, 0.2);
+    border: 1px solid rgba(220, 53, 69, 0.3);
+    border-radius: 0.5rem;
+    color: #ff6b6b;
+    font-size: 0.9rem;
+  }
+
+  .error-message strong {
+    display: block;
+    margin-bottom: 0.25rem;
+  }
+
+  @media (max-width: 600px) {
+    .atm-container {
+      padding: 1rem;
+    }
+
+    .atm-card {
+      padding: 1.5rem;
+    }
+
+    .atm-header h1 {
+      font-size: 1.5rem;
+    }
   }
 </style>

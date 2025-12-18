@@ -1,19 +1,24 @@
 {
   "name": "atm-withdrawal",
-  "description": "The default Marko starter app with TypeScript",
+  "description": "ATM Withdrawal System - Calculate optimal note distribution for cash withdrawals",
   "version": "1.0.0",
   "type": "module",
   "dependencies": {
     "marko": "^6.0.0"
   },
   "devDependencies": {
-    "@marko/run": "^0.9.3"
+    "@marko/run": "^0.9.3",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^1.0.0"
   },
   "private": true,
   "scripts": {
     "dev": "marko-run",
     "build": "marko-run build",
     "preview": "marko-run preview",
-    "start": "node --enable-source-maps ./dist/index.mjs"
+    "start": "node --enable-source-maps ./dist/index.mjs",
+    "test": "vitest",
+    "test:run": "vitest run"
   }
 }
